@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+/.vs
+/Debug
+/Release
+imgui.ini
+/dependencies
+/src/vendor
+demo.mp4
