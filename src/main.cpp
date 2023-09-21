@@ -351,7 +351,7 @@ int main(void)
         glDepthFunc(GL_LESS);
         GLCall(glClearColor(0.529f, 0.808f, 0.922f, 1.0f));
 
-
+        float spacing = 1.0f;
         while (!glfwWindowShouldClose(window))
         {
             float time = glfwGetTime(); // Get the current time in seconds
@@ -501,7 +501,7 @@ int main(void)
                     {
 					    glm::vec4 color = GetInterpolatedColor(currPDF, minPDF, maxPDF);
 					    shader.Bind();
-					    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(samples[i][0] * 1e10 * 50.0f, samples[i][1] * 1e10 * 50.0f + 20.0f, samples[i][2] * 1e10 * 50.0f)); //create a model matrix
+					    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(samples[i][0] * 1e10 * spacing, samples[i][1] * 1e10 * spacing + 20.0f, samples[i][2] * 1e10 * spacing)); //create a model matrix
 					    glm::mat4 mvp = projectionMatrix * viewMatrix * model;
 					    shader.SetUniformMat4f("u_MVP", mvp); //set the uniform
 					    shader.SetUniform4f("u_Color", color.x, color.y, color.z, color.w); //set the uniform
@@ -539,6 +539,10 @@ int main(void)
                     ImGui::SliderFloat("Phase Shift", &phaseShift, 0.001f, 50.0f);
                     ImGui::SliderFloat("Amplitude", &amplitude, 0.001f, 5.0f);
                     ImGui::SliderFloat("Norm", &norm, 0.001f, 5.0f);
+                }
+                if (drawHydrogen)
+                {
+                    ImGui::SliderFloat("Spacing", &spacing, 0.01f, 100.0f);
                 }
             }
             camera.SetFOV(glm::radians(fov));
