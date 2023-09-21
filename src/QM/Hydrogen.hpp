@@ -5,6 +5,7 @@
 #include <gsl/gsl_sf_legendre.h>
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_math.h>
+#include <random>
 
 class Hydrogen
 {
@@ -18,6 +19,7 @@ public:
 	void SetQuantumNumbers(unsigned int n, unsigned int l, unsigned int m);
 
 	std::vector<std::vector<std::vector<double>>>* getGrid();
+	std::vector<std::vector<double>> MonteCarloSample(std::size_t numSamples);
 
 private:
 	unsigned int m_n;

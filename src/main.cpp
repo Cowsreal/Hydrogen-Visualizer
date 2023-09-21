@@ -118,7 +118,10 @@ float GetInterpolatedSize(double pdf, double minPDF, double maxPDF)
 
 int main(void)
 {
-    bool blinn = false;
+    bool drawBlinn = false;
+    bool drawWalls = false;
+    bool drawGround = false;
+    bool drawHydrogen = true;
     const int numRows = 100;
     const int numCols = 100;
     const float planeSizeX = 1000.0f;
@@ -256,33 +259,54 @@ int main(void)
 
         Axis axis(5000.0f);
 
-        int dim = 50;
-        double tolerance = 0.007;
-        bool drawHydrogen = true;
+        int dim = 30;
+        double tolerance = 0.0005;
 
-        Hydrogen hydrogen(2, 1, 1, dim);
-        std::vector<std::vector<std::vector<double>>>* pdf = hydrogen.getGrid();
+        Hydrogen hydrogen(3, 0, 0, dim);
+        //std::vector<std::vector<std::vector<double>>>* pdf = hydrogen.getGrid();
+        std::vector<std::vector<double>> samples = hydrogen.MonteCarloSample(25000);
 
-        for (int i = 0; i < dim; i++)
+        double sumOfSquares = 0.0;
+
+        for (int i = 0; i < samples.size(); i++)
         {
-            for (int j = 0; j < dim; j++)
+            samples[i] = { samples[i][0], samples[i][1], samples[i][2], samples[i][3], hydrogen.GetPDFAtPosition(samples[i][0], samples[i][1], samples[i][2])};
+		    sumOfSquares += samples[i][4] * samples[i][4];
+        }
+        sumOfSquares = sqrt(sumOfSquares);
+        for (int i = 0; i < samples.size(); i++)
+        {
+			samples[i][4] /= sumOfSquares;
+		}
+
+        double minPDF = 99999.0;
+        double maxPDF = -99999.0;
+        //Let's calculate a dynamic tolernace variable
+
+
+        std::unordered_map<float, Sphere*> SphereMap;
+
+        for (int i = 0; i < samples.size(); i++)
+        {
+            double currPdf = samples[i][4];
+            if (currPdf > tolerance)
             {
-                for (int k = 0; k < dim; k++)
+                if (currPdf > maxPDF)
                 {
-                    if (i == j && j == k)
-                    {
-                        //std::cout << (*pdf)[124][124][i] << ", " << std::endl;
-                    }
+					maxPDF = currPdf;
+				}   
+                else if (currPdf < minPDF)
+                {
+					minPDF = currPdf;
+				}
+                if (SphereMap.find(currPdf) == SphereMap.end())     //Precompute all spheres
+                {
+				    SphereMap[currPdf] = new Sphere(GetInterpolatedSize(currPdf, minPDF, maxPDF));
 				}
 			}
         }
 
-        double minPDF = 99999.0;
-        double maxPDF = -99999.0;
-
-        //Let's calculate a dynamic tolernace variable
-
-        std::unordered_map<float, Sphere*> SphereMap;
+        /*
         for(int i = 0; i < dim; i++)
         {
             for(int j = 0; j < dim; j++)
@@ -309,6 +333,7 @@ int main(void)
                 }
             }
         }
+        */
         float fov = 4000.0f;
         float speed = 0.3f;
         float sensitivity = 0.1f;
@@ -357,6 +382,7 @@ int main(void)
                 sphere.Draw();
             }
             */
+            if(drawGround)
             {   //Green plane
                 glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA); //create a model matrix
                 glm::mat4 mvp = projectionMatrix * viewMatrix * model;
@@ -364,6 +390,7 @@ int main(void)
                 shader.SetUniformMat4f("u_MVP", mvp); //set the uniform
                 renderer.Draw(va, ib, shader);
             }
+            if(drawWalls)
             {   //Walls
                 for (int i = 0; i < numRows; i++) {
                     for (int j = 0; j < numCols; j++) {
@@ -380,7 +407,7 @@ int main(void)
                 VertexBufferLayout layout;
                 layout.Push<float>(3);
                 va2.AddBuffer(vb2, layout);
-                if (blinn)
+                if (drawBlinn)
                 {
                     shader2.Bind();
                     glm::mat4 model = glm::translate(glm::mat4(1.0f), translationB); //create a model matrix
@@ -444,6 +471,7 @@ int main(void)
             
             if(drawHydrogen)
             {
+                /*
                 for (int i = 0; i < dim; i++)
                 {
                     for (int j = 0; j < dim; j++)
@@ -465,6 +493,21 @@ int main(void)
                         }
                     }
                 }
+                */
+                for (int i = 0; i < samples.size(); i++)
+                {
+                    double currPDF = samples[i][4];
+                    if (currPDF > tolerance)
+                    {
+					    glm::vec4 color = GetInterpolatedColor(currPDF, minPDF, maxPDF);
+					    shader.Bind();
+					    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(samples[i][0] * 1e10 * 50.0f, samples[i][1] * 1e10 * 50.0f + 20.0f, samples[i][2] * 1e10 * 50.0f)); //create a model matrix
+					    glm::mat4 mvp = projectionMatrix * viewMatrix * model;
+					    shader.SetUniformMat4f("u_MVP", mvp); //set the uniform
+					    shader.SetUniform4f("u_Color", color.x, color.y, color.z, color.w); //set the uniform
+					    SphereMap[currPDF]->Draw();
+					}
+                }
             }
             
             {
@@ -477,14 +520,16 @@ int main(void)
                 ImGui::End();
 
                 ImGui::Begin("Object Controls");
-                ImGui::Checkbox("Blinn", &blinn);
+                ImGui::Checkbox("Blinn", &drawBlinn);
                 ImGui::Checkbox("Hydrogen", &drawHydrogen);
+                ImGui::Checkbox("Walls", &drawWalls);
+                ImGui::Checkbox("Ground", &drawGround);
                 ImGui::SliderFloat3("Translation A", &translationA.x, -960.f, 960.0f);
                 ImGui::SliderFloat3("Translation B", &translationB.x, -960.f, 960.0f);
                 ImGui::SliderFloat("X Amplitude", &xamp, 0.0f, 100.0f);
                 ImGui::SliderFloat("Z Amplitude", &zamp, 0.0f, 100.0f);
                 ImGui::SliderFloat("Wave Length", &waveLength, 0.001f, 50.0f);
-                if(blinn)
+                if(drawBlinn)
                 {
                     ImGui::SliderFloat3("Light Position", &lightPos.x, -960.f, 960.0f);
                     ImGui::SliderFloat3("Light Color", &lightColor.x, 0.0f, 1.0f);
