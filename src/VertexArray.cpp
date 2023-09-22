@@ -12,7 +12,7 @@ VertexArray::~VertexArray()
 	GLCall(glDeleteVertexArrays(1, &m_RendererID));
 }
 
-void VertexArray::AddBuffer(const VertexBuffer& vb, const VertexBufferLayout& layout)
+void VertexArray::AddBuffer(const VertexBuffer& vb, const VertexBufferLayout& layout, bool isInstance)
 {
 	Bind(); //bind the vertex array
 	vb.Bind(); //bind the vertex buffer
@@ -23,6 +23,10 @@ void VertexArray::AddBuffer(const VertexBuffer& vb, const VertexBufferLayout& la
 		const auto& element = elements[i];
 		GLCall(glEnableVertexAttribArray(i));   //enable the vertex attribute
 		GLCall(glVertexAttribPointer(i, element.count , element.type, element.normalized, layout.GetStride(), (const void*)offset)); //0 is the index of the attribute, 2 is the size of the attribute, GL_FLOAT is the type of the attribute, GL_FALSE is whether the data should be normalized, sizeof(float) * 2 is the size of the vertex, 0 is the offset of the 
+		if (isInstance)
+		{
+			GLCall(glVertexAttribDivisor(i, 1));
+		}
 		offset += element.count * VertexBufferElement::GetSizeOfType(element.type);
 	}
 }

@@ -6,7 +6,7 @@ Hydrogen::Hydrogen(unsigned int n, unsigned int l, int m, unsigned int dims)
 {
 	m_a0 = 5.29177210903e-11;
 	m_numPointsPerDimension = dims;
-	m_physicalDimension = 5.0 * m_a0; // Or choose any other constant
+	m_physicalDimension = 50.0 * m_a0; // Or choose any other constant
 	m_stepSize = m_physicalDimension / (m_numPointsPerDimension - 1);
 	GenerateGrid();
 }
@@ -152,7 +152,6 @@ std::complex<double> Hydrogen::SphericalHarmonic(double theta, double phi)
 {
 	std::complex<double> y = gsl_sf_legendre_sphPlm(m_l, m_m, cos(theta)) * exp(std::complex<double>(0, m_m * phi));
 	y *= pow(-1, m_m) * sqrt(((2 * m_l + 1) * gsl_sf_fact(m_l - m_m)) / ((4 * M_PI) * gsl_sf_fact(m_l + m_m)));
-	//std::cout << "Y(" << theta << ", " << phi << ") = " << y << std::endl;
 	return y;
 }
 
@@ -167,41 +166,49 @@ std::vector<std::vector<double>> Hydrogen::MonteCarloSample(std::size_t numSampl
 	std::mt19937 gen(rd());
 	std::uniform_real_distribution<> dis(0, 1);
 
-	// Calculate the total probability in the grid
+	//Calculate total probabilities and create a CDF
+
+	std::vector<double> cdf;
 	double totalProbability = 0;
 	for (const auto& plane : *m_grid) {
 		for (const auto& row : plane) {
 			for (double probability : row) {
 				totalProbability += probability;
+				cdf.push_back(totalProbability);
 			}
 		}
 	}
 
-	// Sample positions based on the PDF values
 	std::vector<std::vector<double>> samples;
-	for (std::size_t m = 0; m < numSamples; m++) {
-		double randomValue = dis(gen) * totalProbability;
-		double cumulativeProbability = 0;
+	samples.reserve(numSamples);
 
-		// Traverse the grid to find the sampled position
-		for (int i = 0; i < m_numPointsPerDimension; i++) {
-			for (int j = 0; j < m_numPointsPerDimension; j++) {
-				for (int k = 0; k < m_numPointsPerDimension; k++) {
-					double probability = (*m_grid)[i][j][k];
-					cumulativeProbability += probability;
-					if (cumulativeProbability >= randomValue) {
-						// Calculate the physical coordinates of the sampled position
-						int center = (m_numPointsPerDimension - 1) / 2;
-						double x = (i - center) * m_stepSize;
-						double y = (j - center) * m_stepSize;
-						double z = (k - center) * m_stepSize;
-						samples.push_back({ x, y, z, probability });
-						goto next;
-					}
-				}
-			}
+	for (std::size_t m = 0; m < numSamples; m++) 
+	{
+		double randomValue = dis(gen) * totalProbability;
+		//Progress meter
+		/*
+		if (m % 1000 == 0)
+		{
+			std::cout << "Monte Carlo Sampling Progress: " << m << "/" << numSamples << std::endl;
 		}
-		next:;
+		*/
+		auto iter = std::lower_bound(cdf.begin(), cdf.end(), randomValue);
+		int index = std::distance(cdf.begin(), iter);
+
+		// index to 3D coordinates
+		int i = index / (m_numPointsPerDimension * m_numPointsPerDimension);
+		int j = (index % (m_numPointsPerDimension * m_numPointsPerDimension)) / m_numPointsPerDimension;
+		int k = index % m_numPointsPerDimension;
+
+		// Calculate the physical coordinates of the sampled position
+		int center = (m_numPointsPerDimension - 1) / 2;
+		double x = (i - center) * m_stepSize;
+		double y = (j - center) * m_stepSize;
+		double z = (k - center) * m_stepSize;
+
+		// Get the probability at the sampled position
+		double probability = (*m_grid)[i][j][k];
+		samples.push_back({ x, y, z, probability });
 	}
 	return samples;
 }

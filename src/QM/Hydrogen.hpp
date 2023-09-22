@@ -6,6 +6,7 @@
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_math.h>
 #include <random>
+#include <iterator>
 
 class Hydrogen
 {

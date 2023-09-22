@@ -490,6 +490,7 @@
     <None Include="res\shaders\test2.shader" />
     <None Include="dependencies\bin\gsl.dll" />
     <None Include="dependencies\bin\gsl.pdb" />
+    <None Include="res\shaders\Sphere.shader" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="dependencies\lib\glfw3.lib" />

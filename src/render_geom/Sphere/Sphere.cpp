@@ -2,7 +2,7 @@
 #include <iostream>
 
 Sphere::Sphere(float radius)
-	: m_Radius(radius), m_VAO(), m_VBO(), m_IBO(), m_VBL(), m_Vertices(), m_Indices()
+	: m_Radius(radius), m_VAO(), m_VBO(), m_IBO(), m_VBL(), m_Vertices(), m_Indices(), m_Instanced(false)
 {
 	GenerateSphereVertices();
 	GenerateSphereIndices();
@@ -10,7 +10,40 @@ Sphere::Sphere(float radius)
 	m_VBO = VertexBuffer(&m_Vertices[0], m_Vertices.size() * sizeof(float));
 	
 	m_VBL.Push<float>(3);
-	m_VAO.AddBuffer(m_VBO, m_VBL);
+	m_VAO.AddBuffer(m_VBO, m_VBL, false);
+}
+
+Sphere::Sphere(const std::vector<SphereInstance>& instances)
+	: m_Radius(1.0f), m_VAO(), m_VBO(), m_IBO(), m_VBL(), m_Vertices(), m_Indices(), m_Instanced(true)
+{
+	GenerateSphereVertices();
+	GenerateSphereIndices();
+	m_IBO = IndexBuffer(&m_Indices[0], m_Indices.size());
+	m_VBO = VertexBuffer(&m_Vertices[0], m_Vertices.size() * sizeof(float));
+	
+	m_VBL.Push<float>(3);
+	m_VAO.Bind();
+	m_VAO.AddBuffer(m_VBO, m_VBL, false);
+	
+	m_InstanceVBO = VertexBuffer(&instances[0], instances.size() * sizeof(SphereInstance));
+	m_InstanceVBO.Bind();
+
+	GLsizei stride = sizeof(SphereInstance);
+
+	GLCall(glEnableVertexAttribArray(1));
+	GLCall(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (const void*)offsetof(SphereInstance, position)));
+	GLCall(glEnableVertexAttribArray(2));
+	GLCall(glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, stride, (const void*)offsetof(SphereInstance, color)));
+	GLCall(glEnableVertexAttribArray(3));
+	GLCall(glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, stride, (const void*)offsetof(SphereInstance, radius)));
+	glVertexAttribDivisor(1, 1);
+	glVertexAttribDivisor(2, 1);
+	glVertexAttribDivisor(3, 1);
+
+	m_numInstances = instances.size();
+
+	m_VAO.Unbind();
+	m_InstanceVBO.Unbind();
 }
 
 void Sphere::GenerateSphereVertices()
@@ -65,6 +98,13 @@ void Sphere::Draw()
 {
 	m_VAO.Bind();
 	m_IBO.Bind();
-	glDrawElements(GL_TRIANGLE_STRIP, m_Indices.size(), GL_UNSIGNED_INT, 0);
+	if (m_Instanced)
+	{
+		glDrawElementsInstanced(GL_TRIANGLE_STRIP, m_Indices.size(), GL_UNSIGNED_INT, 0, m_numInstances);
+	}
+	else
+	{
+		glDrawElements(GL_TRIANGLE_STRIP, m_Indices.size(), GL_UNSIGNED_INT, 0);
+	}
 }
 

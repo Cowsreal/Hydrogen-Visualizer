@@ -16,7 +16,7 @@ Axis::Axis(float length)
         }), m_vb(&m_vertices[0], m_vertices.size() * sizeof(float)), m_va(), m_vbl()
 {
     m_vbl.Push<float>(3);
-    m_va.AddBuffer(m_vb, m_vbl);
+    m_va.AddBuffer(m_vb, m_vbl, false);
 }
 
 Axis::~Axis() {
