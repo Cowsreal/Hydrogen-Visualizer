@@ -196,7 +196,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);	//set the OpenGL profile to core
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(windowWidth, windowHeight, ";-; this is so fuckign painful", NULL, NULL);
+    window = glfwCreateWindow(windowWidth, windowHeight, "Hydrogen Visualizer", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -254,9 +254,6 @@ int main()
         IndexBuffer ib(indices, 6); //create an index buffer
 
         Shader shader("res/shaders/Basic.shader"); //create a shader
-        Shader shader2("res/shaders/Sinusoid.shader"); //create a shader
-        Shader shader3("res/shaders/test.shader"); //create a shader
-        Shader shader4("res/shaders/test2.shader"); //create a shader
         Shader sphereShader("res/shaders/Sphere.shader"); //create a shader
 
         va.Unbind();
