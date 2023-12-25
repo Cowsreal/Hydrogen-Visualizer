@@ -28,7 +28,7 @@ class Sphere
 {
 public:
 	Sphere() {};
-	Sphere(float radius);
+	Sphere(float radius, int numPoints);
 	Sphere(const std::vector<SphereInstance>& instances);
 	~Sphere() {};
 
@@ -46,6 +46,6 @@ private:
 	std::vector<float> m_Vertices;
 	std::vector<unsigned int> m_Indices;
 	std::size_t m_numInstances;
-	unsigned int m_numCols = 25;
-	unsigned int m_numRows = 25;
+	unsigned int m_numCols = 15;
+	unsigned int m_numRows = 15;
 };

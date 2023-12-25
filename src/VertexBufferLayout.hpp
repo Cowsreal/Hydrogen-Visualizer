@@ -3,9 +3,8 @@
 #include <GL/glew.h>
 #include "Renderer.hpp"
 
-class VertexBufferElement
+struct VertexBufferElement
 {
-public:
 	static unsigned int GetSizeOfType(unsigned int type)
 	{
 		switch (type)
