@@ -1,3 +1,0 @@
-E:/GitHub/Hydrogen-Visualizer/build/CMakeFiles/main.dir
-E:/GitHub/Hydrogen-Visualizer/build/CMakeFiles/ALL_BUILD.dir
-E:/GitHub/Hydrogen-Visualizer/build/CMakeFiles/ZERO_CHECK.dir
