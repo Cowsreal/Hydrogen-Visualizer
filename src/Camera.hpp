@@ -7,7 +7,7 @@
 class Camera
 {
 public:
-    Camera(float fov, float aspectRatio, float near, float far, GLFWwindow* window, bool mouseEnabled);
+    Camera(float fov, float aspectRatio, float near, float far, GLFWwindow* window);
 
     void BindControls(Controls* controls);
     const glm::mat4& GetViewMatrix() const;
@@ -18,22 +18,12 @@ public:
     glm::vec3 getUp() { return m_Up; }
 
     void SetPosition(const glm::vec3& position);
-    void SetFront(const glm::vec3& front);
     void SetFOV(float fov);
     void setSpeed(float speed) { m_Speed = speed; }
     void setSensitivity(float sensitivity) { m_MouseSensitivity = sensitivity; }
-    void setMouseEnabled() { m_MouseEnabled = true; }
-
-    void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch);
-
-
 
 private:
-<<<<<<< HEAD
     static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-=======
-    void UpdateCameraVectors();
->>>>>>> a8e6566ecf49eea1651fd1e600cbde840ec69ccf
     void RecalculateViewMatrix()
     {
         m_ViewMatrix = glm::lookAt(m_Position, m_Position + m_Front, m_Up);
@@ -56,7 +46,6 @@ private:
     float m_Pitch = 0.0f;                                   // Initial pitch angle (vertical)
     float m_MouseSensitivity = 0.1f;                             // Mouse sensitivity
     float m_Speed = 0.1f;
-    bool m_MouseEnabled = false;
 
     Controls* m_Controls;
     glm::mat4 m_ViewMatrix;

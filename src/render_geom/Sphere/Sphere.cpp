@@ -1,8 +1,8 @@
 #include "Sphere.hpp"
 #include <iostream>
 
-Sphere::Sphere(float radius, int numPoints)
-	: m_Radius(radius), m_VAO(), m_VBO(), m_IBO(), m_VBL(), m_Vertices(), m_Indices(), m_Instanced(false), m_numCols(numPoints), m_numRows(numPoints)
+Sphere::Sphere(float radius)
+	: m_Radius(radius), m_VAO(), m_VBO(), m_IBO(), m_VBL(), m_Vertices(), m_Indices(), m_Instanced(false)
 {
 	GenerateSphereVertices();
 	GenerateSphereIndices();

@@ -6,6 +6,7 @@ public:
 	IndexBuffer() : m_RendererID(0) {}; //default constructor
 	IndexBuffer(const unsigned int* data, unsigned int count); //constructor
 
+
 	void Bind() const;
 	void Unbind() const;
 

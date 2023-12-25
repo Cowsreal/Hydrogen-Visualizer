@@ -9,12 +9,6 @@ VertexBuffer::VertexBuffer(const void* data, unsigned int size)
     GLCall(glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW)); //6 * sizeof(float) is the size of the data we are storing
 }
 
-void VertexBuffer::UpdateData(const void* data, unsigned int size)
-{
-    Bind();
-    GLCall(glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW)); //6 * sizeof(float) is the size of the data we are storing
-}
-
 /*
 VertexBuffer::~VertexBuffer()
 {
@@ -28,9 +22,4 @@ void VertexBuffer::Bind() const
 void VertexBuffer::Unbind() const
 {
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));  //GL_ARRAY_BUFFER is a type of buffer, bind the current buffer
-}
-
-void VertexBuffer::Delete() const
-{
-    GLCall(glDeleteBuffers(1, &m_RendererID));	//delete the buffer
 }

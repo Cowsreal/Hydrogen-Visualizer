@@ -28,7 +28,7 @@ class Sphere
 {
 public:
 	Sphere() {};
-	Sphere(float radius, int numPoints);
+	Sphere(float radius);
 	Sphere(const std::vector<SphereInstance>& instances);
 	~Sphere() {};
 

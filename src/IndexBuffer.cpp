@@ -10,7 +10,6 @@ IndexBuffer::IndexBuffer(const unsigned int* data, unsigned int count)
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_RendererID));  //GL_ARRAY_BUFFER is a type of buffer, bind the current buffer
     GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(unsigned int), data, GL_STATIC_DRAW)); //6 * sizeof(float) is the size of the data we are storing
 }
-
 /*
 IndexBuffer::~IndexBuffer()
 {

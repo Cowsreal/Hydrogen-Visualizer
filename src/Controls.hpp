@@ -14,5 +14,6 @@ private:
 	GLFWwindow* m_Window;
 	static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
+		Controls* input = static_cast<Controls*>(glfwGetWindowUserPointer(window));
 	}
 };

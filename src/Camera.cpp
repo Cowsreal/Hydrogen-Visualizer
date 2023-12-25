@@ -2,26 +2,18 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw_gl3.h"
 
-<<<<<<< HEAD
 Camera::Camera(float fov, float aspectRatio, float near, float far, GLFWwindow* window)
-=======
-Camera::Camera(float fov, float aspectRatio, float near, float far, GLFWwindow* window, bool mouseEnabled = false)
->>>>>>> a8e6566ecf49eea1651fd1e600cbde840ec69ccf
 	: m_FOV(fov), m_AspectRatio(aspectRatio), m_Near(near), m_Far(far)
 {
 	m_Position = glm::vec3(0.0f, 0.0f, 0.0f);
 	m_Front = glm::vec3(0.0f, 0.0f, -1.0f);
 	m_Up = glm::vec3(0.0f, 1.0f, 0.0f);
-<<<<<<< HEAD
 
 	// Set the user pointer to the camera instance
 	glfwSetWindowUserPointer(window, this);
 
 	// Set up the mouse callback with the static function
 	glfwSetCursorPosCallback(window, mouse_callback);
-=======
-	
->>>>>>> a8e6566ecf49eea1651fd1e600cbde840ec69ccf
 	RecalculateViewMatrix();
 	RecalculateProjectionMatrix();
 }
@@ -35,14 +27,6 @@ void Camera::SetFOV(float fov)
 void Camera::SetPosition(const glm::vec3& position) {
 	m_Position = position;
 	RecalculateViewMatrix();
-<<<<<<< HEAD
-=======
-}
-
-void Camera::SetFront(const glm::vec3& front) {
-	m_Front = front;
-	RecalculateViewMatrix();
->>>>>>> a8e6566ecf49eea1651fd1e600cbde840ec69ccf
 }
 
 void Camera::BindControls(Controls* controls) {
@@ -100,28 +84,8 @@ void Camera::ProcessControls()
 	RecalculateViewMatrix();
 }
 
-void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch) {
-    xoffset *= m_MouseSensitivity;
-    yoffset *= m_MouseSensitivity;
-
-    m_Yaw   += xoffset;
-    m_Pitch += yoffset;
-
-    // Make sure that when pitch is out of bounds, screen doesn't get flipped
-    if (constrainPitch) {
-        if (m_Pitch > 89.0f)
-            m_Pitch = 89.0f;
-        if (m_Pitch < -89.0f)
-            m_Pitch = -89.0f;
-    }
-
-    // Update Front, Right and Up Vectors using the updated Euler angles
-    UpdateCameraVectors();
-}
-
-void Camera::UpdateCameraVectors()
+void Camera::mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-<<<<<<< HEAD
 	Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
 	if (camera != NULL)
 	{
@@ -168,12 +132,3 @@ void Camera::UpdateCameraVectors()
 		io.WantCaptureMouse = glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED;
 	}
 }
-=======
-	glm::vec3 front;
-	front.x = cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
-	front.y = sin(glm::radians(m_Pitch));
-	front.z = sin(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
-	m_Front = glm::normalize(front);
-	RecalculateViewMatrix();
-}
->>>>>>> a8e6566ecf49eea1651fd1e600cbde840ec69ccf
