@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="E:\GitHub\Hydrogen-Visualizer\build\CMakeFiles\22bc1bc9346dcb9ff53a20a947a3c88b\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{F1825416-67BD-3797-8B9A-ED8BCB1A54DC}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

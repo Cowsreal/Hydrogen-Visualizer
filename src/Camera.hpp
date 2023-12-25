@@ -4,7 +4,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "Controls.hpp"
 
-class Camera 
+class Camera
 {
 public:
     Camera(float fov, float aspectRatio, float near, float far, GLFWwindow* window);
@@ -14,6 +14,8 @@ public:
     const glm::mat4& GetProjectionMatrix() const;
     void ProcessControls();
     glm::vec3 getPosition() { return m_Position; }
+    glm::vec3 getFront() { return m_Front; }
+    glm::vec3 getUp() { return m_Up; }
 
     void SetPosition(const glm::vec3& position);
     void SetFOV(float fov);
@@ -22,12 +24,12 @@ public:
 
 private:
     static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-    void RecalculateViewMatrix() 
+    void RecalculateViewMatrix()
     {
         m_ViewMatrix = glm::lookAt(m_Position, m_Position + m_Front, m_Up);
     }
 
-    void RecalculateProjectionMatrix() 
+    void RecalculateProjectionMatrix()
     {
         m_ProjectionMatrix = glm::perspective(glm::radians(m_FOV), m_AspectRatio, m_Near, m_Far);
     }

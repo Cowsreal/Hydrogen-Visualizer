@@ -1,11 +1,3 @@
-//TODO: 
-//      Create sphere renderer
-//      Create PDF definition for hydrogen atom wave function
-//      Create a Monte Carlo based position sampler
-//      Create a sphere at each sampled position
-//      Render the spheres
-//      Create a color mapper for regions of constant probability
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -18,7 +10,6 @@
 #include <unordered_map>
 
 #include "Renderer.hpp"
-
 #include "VertexBuffer.hpp"
 #include "IndexBuffer.hpp"
 #include "VertexArray.hpp"
@@ -108,12 +99,91 @@ float GetInterpolatedSize(double pdf, double minPDF, double maxPDF)
 	return size1 * (1.0 - normalizedPDF) * 2 + size2 * normalizedPDF;
 }
 
+Sphere* GenerateHydrogenAtom(int dim, int n, int l, int m, double size)
+{
+    // GENERATE HYDROGEN ATOM
+
+    // PDF TOLERANCE, i.e., the minimum PDF value to render
+    double tolerance = 0.0001;
+
+    Hydrogen hydrogen(n, l, m, dim, size);
+
+    // SAMPLE GRID POSITIONS SO WE DONT HAVE TO RENDER ALL OF THEM
+    std::vector<std::vector<double>> samples = hydrogen.MonteCarloSample(100000);
+
+    double sumOfSquares = 0.0;
+
+    // NORMALIZE PDF
+    for (int i = 0; i < samples.size(); i++)
+    {
+        sumOfSquares += samples[i][3] * samples[i][3];
+    }
+    sumOfSquares = sqrt(sumOfSquares);
+    for (int i = 0; i < samples.size(); i++)
+    {
+        samples[i][3] /= sumOfSquares;
+    }
+
+    double maxPDF = std::numeric_limits<double>::lowest();
+    double minPDF = std::numeric_limits<double>::max();
+
+    std::vector<SphereInstance> sphereInstances;
+    float spacing = 5.0f;
+
+    for (int i = 0; i < samples.size(); i++)
+    {
+        double currPdf = samples[i][3];
+        if (currPdf > tolerance)
+        {
+            // GENERATE POSITION, COLOR, SIZE VALUES FOR EACH SPHERE IN THE INSTANCE
+            maxPDF = std::max(maxPDF, currPdf);
+            minPDF = std::min(minPDF, currPdf);
+            SphereInstance currInstance;
+            currInstance.position[0] = samples[i][0] * 1e11 * spacing;
+            currInstance.position[1] = samples[i][1] * 1e11 * spacing;
+            currInstance.position[2] = samples[i][2] * 1e11 * spacing;
+            glm::vec4 color = GetInterpolatedColor(currPdf, minPDF, maxPDF);
+            currInstance.color[0] = (float)color.r;
+            currInstance.color[1] = (float)color.g;
+            currInstance.color[2] = (float)color.b;
+            currInstance.color[3] = (float)color.a;
+            currInstance.radius = GetInterpolatedSize(currPdf, minPDF, maxPDF) * size / 10.0;
+            sphereInstances.push_back(currInstance);
+        }
+    }
+
+    std::cout << "Finished" << std::endl;
+
+    Sphere* sphere = new Sphere(sphereInstances);
+
+    return sphere;
+}
+
+void ChangeStates(bool &s1, bool&s2)
+{
+    s1 = !s1;
+	s2 = !s2;
+}
+
+Sphere* ConfirmHydrogenStates(int tn, int tl, int tm, int bc, float size)
+{
+    return GenerateHydrogenAtom(bc, tn, tl, tm, double(size));
+}
+
 int main()
 {
+    float size = 50.0;
+    bool render = false;
+    bool menu = true;
     bool drawGround = false;
     bool drawHydrogen = true;
     bool drawCoordinateAxis = true;
- 
+    int n = 3;
+    int l = 2;
+    int m = 2;
+    float escCooldown = 0.5f;
+    double lastKeyPressTime = 0;
+
     GLFWwindow* window;
 
     /* Initialize the library */
@@ -126,7 +196,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);	//set the OpenGL profile to core
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(windowWidth, windowHeight, ";-; this is so painful", NULL, NULL);
+    window = glfwCreateWindow(windowWidth, windowHeight, ";-; this is so fuckign painful", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -143,23 +213,38 @@ int main()
         std::cout << "Error!" << std::endl;
     }
     std::cout << glGetString(GL_VERSION) << std::endl;
-    {
 
+    //INITIALIZATION OPTIONS
+
+    GLCall(glEnable(GL_CULL_FACE));
+    GLCall(glCullFace(GL_FRONT));
+    GLCall(glFrontFace(GL_CCW));
+    GLCall(glEnable(GL_BLEND));
+    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    GLCall(glViewport(0, 0, windowWidth, windowHeight));
+    GLCall(glEnable(GL_DEPTH_TEST));
+    GLCall(glDepthFunc(GL_LESS));
+    GLCall(glClearColor(0.529f, 0.828f, 0.952f, 1.0f));
+    //GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+
+    // IMGUI INITIALIZATION
+    ImGui::CreateContext();
+    ImGui_ImplGlfwGL3_Init(window, true);
+    ImGui::StyleColorsDark();
+
+    {
         float positions[] = {
-            -2000.0f,  -20.0f, -2000.0f,
-             2000.0f,  -20.0f, -2000.0f,
-             2000.0f,  -20.0f,  2000.0f,
-            -2000.0f,  -20.0f,  2000.0f,
+            -10000.0f,  0.0f, -10000.0f,
+             10000.0f,  0.0f, -10000.0f,
+             10000.0f,  0.0f,  10000.0f,
+            -10000.0f,  0.0f,  10000.0f,
         };
 
         unsigned int indices[] = {
             0, 1, 2,        //Triangle 1
             2, 3, 0 	    //Triangle 2
         };
-
-        GLCall(glEnable(GL_BLEND));
-        GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-
+        
         VertexArray va; //create a vertex array
         VertexBuffer vb(positions, 4 * 3 * sizeof(float)); //create a vertex buffer
 
@@ -181,13 +266,10 @@ int main()
 
         Renderer renderer; //create a renderer
 
-        ImGui::CreateContext();
-        ImGui_ImplGlfwGL3_Init(window, true);
-        ImGui::StyleColorsDark();
+        glm::vec3 translationA(0, -1000.0f, 0);
 
-        glm::vec3 translationA(0, -50.0f, 0);
-
-        Camera camera(glm::radians(90.0f), (float)windowWidth / (float)windowHeight, 0.1f, 5000.0f, window);
+        float nearPlaneDistance = 0.1;
+        Camera camera(glm::radians(90.0f), (float)windowWidth / (float)windowHeight, nearPlaneDistance, 50000.0f, window);
         camera.SetPosition(glm::vec3(0, 50.0f, 0.0));
 
         Controls controls(window);
@@ -195,64 +277,19 @@ int main()
 
         Axis axis(5000.0f);
 
-        int dim = 50;
-        double tolerance = 0.0001;
+        int bc = 50;
+        Sphere* sphere = GenerateHydrogenAtom(bc, n, l, m, size);
+        
+        // MOVEMENT SETTINGS
 
-        Hydrogen hydrogen(3, 2, 2, dim);
-        //std::vector<std::vector<std::vector<double>>>* pdf = hydrogen.getGrid();
-        std::vector<std::vector<double>> samples = hydrogen.MonteCarloSample(100000);
-
-        double sumOfSquares = 0.0;
-
-        for (int i = 0; i < samples.size(); i++)
-        {
-		    sumOfSquares += samples[i][3] * samples[i][3];
-        }
-        sumOfSquares = sqrt(sumOfSquares);
-        for (int i = 0; i < samples.size(); i++)
-        {
-			samples[i][3] /= sumOfSquares;
-		}
-        double maxPDF = std::numeric_limits<double>::lowest();
-        double minPDF = std::numeric_limits<double>::max();
-        //Let's calculate a dynamic tolernace variable
-
-        std::vector<SphereInstance> sphereInstances;
-        float spacing = 5.0f;
-
-        for (int i = 0; i < samples.size(); i++)
-        {
-            double currPdf = samples[i][3];
-            if (currPdf > tolerance)
-            {
-                maxPDF = std::max(maxPDF, currPdf);
-                minPDF = std::min(minPDF, currPdf);
-                SphereInstance currInstance;
-                currInstance.position[0] = samples[i][0] * 1e11 * spacing;
-                currInstance.position[1] = samples[i][1] * 1e11 * spacing;
-                currInstance.position[2] = samples[i][2] * 1e11 * spacing;
-                glm::vec4 color = GetInterpolatedColor(currPdf, minPDF, maxPDF);
-                currInstance.color[0] = (float) color.r;
-                currInstance.color[1] = (float) color.g;
-                currInstance.color[2] = (float) color.b;
-                currInstance.color[3] = (float) color.a;
-                currInstance.radius = GetInterpolatedSize(currPdf, minPDF, maxPDF) * 5.0;
-
-                sphereInstances.push_back(currInstance);
-			}
-		}
-
-        Sphere sphere = Sphere(sphereInstances);
-        float fov = 4000.0f;
-        float speed = 0.3f;
+        float fov = 45.0f;
+        float speed = 2.5f;
         float sensitivity = 0.1f;
 
-        glViewport(0, 0, windowWidth, windowHeight);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
-        GLCall(glClearColor(0.529f, 0.828f, 0.952f, 1.0f));
-
-        /* Loop until the user closes the window */
+        int tn = n;
+        int tl = l;
+        int tm = m;
+        // RENDERING LOOP
         while (!glfwWindowShouldClose(window))
         {
             float time = glfwGetTime(); // Get the current time in seconds
@@ -263,64 +300,133 @@ int main()
             renderer.Clear();
 
             ImGui_ImplGlfwGL3_NewFrame();
-            if(drawCoordinateAxis)
-            {   //Coordinate axis
-                shader.Bind();
-                glm::mat4 model = glm::mat4(1.0f); //create a model matrix
-                glm::mat4 mvp = projectionMatrix * viewMatrix * model;
-                shader.SetUniformMat4f("u_MVP", mvp); //set the uniform
-                shader.SetUniform4f("u_Color", 1.0f, 1.0f, 1.0f, 1.0f); //set the uniform
-                glLineWidth(3.0f);
-                axis.Draw();
-            }
-            if(drawGround)
-            {   //Green plane
-                glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA); //create a model matrix
-                glm::mat4 mvp = projectionMatrix * viewMatrix * model;
-                shader.SetUniform4f("u_Color", 0.482f, 0.62f, 0.451f, 1.0f); //set the uniform
-                shader.SetUniformMat4f("u_MVP", mvp); //set the uniform
-                renderer.Draw(va, ib, shader);
-            }
-            if(drawHydrogen)
+            if (menu)
             {
-                sphereShader.Bind();
-                glm::mat4 model = glm::mat4(1.0f); //create a model matrix
-                glm::mat4 mvp = projectionMatrix * viewMatrix * model;
-                sphereShader.SetUniformMat4f("u_MVP", mvp); //set the uniform
-                sphere.Draw();
-            }
-            
-            {
+                ImGui::SetNextWindowSize(ImVec2(500, 500));
+                ImGui::SetNextWindowPos(ImVec2(960, 540)); // Position: x=50, y=50
+                ImGui::Begin("Menu");
+                if (ImGui::Button("Render Hydrogen Atom")) 
+                {
+                    ChangeStates(menu, render); // Call your function when the button is pressed.
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                }
+                ImGui::SliderInt("n", &tn, 1, 50);
+                // Adjust the range of l based on n (0 to n - 1)
+                if (tl >= tn)
+                {
+                    tl = tn - 1; // Keep l within the valid range when n changes
+                }
+                ImGui::SliderInt("l", &tl, 0, tn - 1);
+                // Adjust the range of m based on l (-l to l)
+                if (tm < -tl)
+                {
+                    tm = -tl; // Adjust m to stay within the new range
+                }
+                if (tm > tl)
+                {
+                    tm = tl;
+                }
+                ImGui::SliderInt("m", &tm, -tl, tl);
+                ImGui::SliderInt("Ball Count", &bc, 10, 200);
+                ImGui::SliderFloat("Size", &size, 0.0, 1000.0);
+
+                // Create confirm button
+                if (ImGui::Button("Confirm Atom")) 
+                {
+                    delete sphere;
+                    sphere = ConfirmHydrogenStates(tn, tl, tm, bc, size); // Call the Confirm function when the button is pressed
+                }
+
+                if (ImGui::Button("Exit"))
+                {
+					glfwSetWindowShouldClose(window, true);
+				}
+
+				ImGui::End();
                 ImGui::Begin("Application Controls");
-                ImGui::SliderFloat("FOV", &fov, 0.0f, 10000.0f);
-                ImGui::SliderFloat("Flying Speed", &speed, 0.0f, 5.0f);
-                ImGui::SliderFloat("Mouse Sensitivity", &sensitivity, 0.0f, 5.0f);
+                ImGui::SliderFloat("FOV", &fov, 0.0f, 120.0f);
+                ImGui::SliderFloat("Flying Speed", &speed, 0.0f, 50.0f);
+                ImGui::SliderFloat("Mouse Sensitivity", &sensitivity, 0.0f, 2.0f);
                 ImGui::Text("Camera Position: %.3f, %.3f, %.3f", camera.getPosition().x, camera.getPosition().y, camera.getPosition().z);
                 ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+                ImGui::Text("Time: %.3fs", time);
                 ImGui::End();
 
                 ImGui::Begin("Object Controls");
                 ImGui::Checkbox("Hydrogen", &drawHydrogen);
                 ImGui::Checkbox("Ground", &drawGround);
                 ImGui::Checkbox("Coordinate Axis", &drawCoordinateAxis);
-                if (drawHydrogen)
+                ImGui::End();
+                ImGui::Render();
+                ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
+                if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS && time - lastKeyPressTime > escCooldown)
                 {
-                    ImGui::SliderFloat("Spacing", &spacing, 0.01f, 100.0f);
+                    // Toggle the visibility
+                    ChangeStates(menu, render);
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                    lastKeyPressTime = time;
                 }
             }
-            camera.SetFOV(glm::radians(fov));
-            camera.setSpeed(speed);
-            camera.setSensitivity(sensitivity);
+            if (render)
+            {
+                if (drawCoordinateAxis)
+                {   //Coordinate axis
+                    shader.Bind();
+                    glm::mat4 model = glm::mat4(1.0f); //create a model matrix
+                    glm::mat4 mvp = projectionMatrix * viewMatrix * model;
+                    shader.SetUniformMat4f("u_MVP", mvp); //set the uniform
+                    shader.SetUniform4f("u_Color", 1.0f, 1.0f, 1.0f, 1.0f); //set the uniform
+                    glLineWidth(3.0f);
+                    axis.Draw();
+                }
+                if (drawGround)
+                {   //Green plane
+                    shader.Bind();
+                    glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA); //create a model matrix
+                    glm::mat4 mvp = projectionMatrix * viewMatrix * model;
+                    shader.SetUniform4f("u_Color", 0.482f, 0.62f, 0.451f, 1.0f); //set the uniform
+                    shader.SetUniformMat4f("u_MVP", mvp); //set the uniform
+                    renderer.Draw(va, ib, shader);
+                }
+                if (drawHydrogen)
+                {
+                    sphereShader.Bind();
+                    glm::mat4 model = glm::mat4(1.0f); //create a model matrix
+                    glm::mat4 mvp = projectionMatrix * viewMatrix * model;
+                    sphereShader.SetUniformMat4f("u_MVP", mvp); //set the uniform
+                    sphere->Draw();
+                }
+                if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS && time - lastKeyPressTime > escCooldown)
+                {
+                    lastKeyPressTime = time;
+                    // Toggle the visibility
+                    ChangeStates(render, menu);
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                }
 
-            ImGui::Render();
-            ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
+                ImGui::SetNextWindowSize(ImVec2(400, 80));
+                ImGui::Begin("Status:");
+                ImGui::Text("Camera Position: %.3f, %.3f, %.3f", camera.getPosition().x, camera.getPosition().y, camera.getPosition().z);
+                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+                ImGui::Text("Time: %.3fs", time);
+                ImGui::End();
+
+                // CAMERA CONTROLS
+                camera.SetFOV(fov);
+                camera.setSpeed(speed);
+                camera.setSensitivity(sensitivity);
+
+                ImGui::Render();
+                ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
+                camera.ProcessControls();
+            }
+            
 
             /* Swap front and back buffers */
             glfwSwapBuffers(window);
 
             /* Poll for and process events */
             glfwPollEvents();
-            camera.ProcessControls();
         }
     }
     ImGui_ImplGlfwGL3_Shutdown();

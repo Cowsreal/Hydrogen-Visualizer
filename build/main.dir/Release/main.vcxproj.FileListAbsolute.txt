@@ -1,0 +1,3 @@
+E:\GitHub\Hydrogen-Visualizer\build\Release\gsl.dll
+E:\GitHub\Hydrogen-Visualizer\build\Release\gslcblas.dll
+E:\GitHub\Hydrogen-Visualizer\build\main.dir\Release\main.vcxproj.CopyComplete

@@ -11,7 +11,7 @@
 class Hydrogen
 {
 public:
-	Hydrogen(unsigned int n, unsigned int l, int m, unsigned int dims);
+	Hydrogen(unsigned int n, unsigned int l, int m, unsigned int dims, double size);
 	~Hydrogen();
 	Hydrogen(const Hydrogen& rhs);
 	Hydrogen& operator=(const Hydrogen& rhs);
@@ -25,7 +25,8 @@ public:
 private:
 	unsigned int m_n;
 	unsigned int m_l;
-	unsigned int m_m;
+	int m_m;
+	double m_size;
 	double m_physicalDimension;
 	double m_a0;
 	unsigned int m_numPointsPerDimension;

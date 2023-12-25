@@ -1,12 +1,12 @@
 #include "Hydrogen.hpp"
 #include <iostream>
 
-Hydrogen::Hydrogen(unsigned int n, unsigned int l, int m, unsigned int dims)
-	: m_n(n), m_l(l), m_m(m)
+Hydrogen::Hydrogen(unsigned int n, unsigned int l, int m, unsigned int dims, double size)
+	: m_n(n), m_l(l), m_m(m), m_size(size)
 {
 	m_a0 = 5.29177210903e-11;
 	m_numPointsPerDimension = dims;
-	m_physicalDimension = 50.0 * m_a0; // Or choose any other constant
+	m_physicalDimension = m_size * m_a0; // Or choose any other constant
 	m_stepSize = m_physicalDimension / (m_numPointsPerDimension - 1);
 	GenerateGrid();
 }
@@ -150,7 +150,7 @@ double Hydrogen::RadialComponent(double r)
 
 std::complex<double> Hydrogen::SphericalHarmonic(double theta, double phi)
 {
-	std::complex<double> y = gsl_sf_legendre_sphPlm(m_l, m_m, cos(theta)) * exp(std::complex<double>(0, m_m * phi));
+	std::complex<double> y = gsl_sf_legendre_sphPlm(m_l, abs(m_m), cos(theta)) * exp(std::complex<double>(0, m_m * phi));
 	y *= pow(-1, m_m) * sqrt(((2 * m_l + 1) * gsl_sf_fact(m_l - m_m)) / ((4 * M_PI) * gsl_sf_fact(m_l + m_m)));
 	return y;
 }
